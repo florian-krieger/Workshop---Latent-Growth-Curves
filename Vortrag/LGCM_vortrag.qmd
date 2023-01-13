@@ -1,0 +1,616 @@
+---
+title: "Latente Wachstumskurvenmodelle"
+author: Dr. Florian Krieger
+date: 13. Januar 2023
+institute: TU Dortmund
+format: 
+   revealjs:
+     incremental: true
+     chalkboard:
+      theme: whiteboard
+     slide-number: true
+     logo: figs/logo_meb.png
+     theme: 
+       - default
+       - custom.scss
+editor: visual
+---
+
+# Motivation
+
+-   Interesse an **praktischer Einführung** latenten Wachstumsmodellen
+
+-   Eignet sich diese Methodik, um COSIMA-Daten zu analysieren?
+
+## Fragebogen Auswertung 1
+
+-   **Diese Inhalte über SEM würde ich gerne noch einmal genauer hören**
+
+    -   Voraussetzungen, do\`s and don\`ts
+    -   In welcher Situation ist ein SEM anderen statistischen Modellen vorzuziehen?
+    -   Ich habe noch nie mit SEMs gearbeitet und habe auch keine wirkliche theoretische Grundlage. Also die grundlegende Idee dahinter wäre für mich definitiv hilfreich.
+
+## Fragebogen Auswertung 2
+
+-   **Das interessiert mich vor allem bei latenten Wachstumsmodellen**
+
+    -   Ich möchte mir anschauen wie sich unser Outcome (Diagnosequalität ) über 5 Messzeitpunkte hinweg unter Berücksichtung von Pretest Variablen und verschiedenen Interventionen entwickelt. Mich interessiert daher vorallem die methodische Umsetzung und Interpretation von LGM.
+    -   Spezifikation und Interpretation; Poweranalysen
+    -   Voraussetzungen für den Datensatz, Interpretation Output, graphische Darstellung, wie berichtet man das im Paper
+    -   Modellvoraussetzungen und Beispiele von Fragestellungen, für deren Beantwortung LGM eine gute Wahl sind
+    -   Die grundlegende Idee dahinter und Fälle, in denen eine Anwendung Sinn ergibt (z.B. Anforderungen an Daten, insbes. Sample Size)
+    -   Grundlegende Einführung
+    -   Praktische Umsetzung
+
+# Gliederung
+
+::: columns
+::: {.column width="60%"}
+-   Einstiegsbeispiel HLM
+
+-   Wiederholung SEM
+
+-   LGCM Einführung und Anwendung
+
+-   LGCM Spezielles
+:::
+
+::: {.column width="40%"}
+![](figs/agenda.jpg)
+:::
+:::
+
+# Einstiegsbeispiel
+
+## Idee
+
+Der Name Workshop besteht aus **zwei Teilen**:
+
+1.  Latente
+
+2.  Wachstumsmodelle
+
+Schauen wir uns zuerst mal den **zweiten Teil** an und danach den **ersten Teil**...
+
+## Datenbasis
+
+-   **GPA Veränderung über die Zeit (**Daten von [hier](https://stats.oarc.ucla.edu/r/seminars/lgm/))
+
+-   Vier Messzeitpunkte (`gpa1`, `gpa2`, `gpa3`, `gpa4`)
+
+## Datenbasis
+
+```{r}
+#| echo: true
+
+# load data
+data1 <- read.table("data/gpa/gpa_long.csv", sep = ",", header=TRUE)
+
+# get first 10 rows
+head(data1, 10)
+
+```
+
+## Fragestellungen
+
+-   Wie hoch ist der **mittlere GPA zu T1**?
+
+-   Gibt es eine **Veränderung** von GPA **über die Zeit** (steigen, sinken)?
+
+-   Gibt es **Variablität im mittleren GPA** zu T1?
+
+-   Gibt es **Variabilität in der Veränderung** von GPA über die Zeit?
+
+-   **Kovariieren** diese beiden **Variabilitäten**?
+
+## Statistische Umsetzung
+
+-   Berechnung mittels eines **Mehrebenenregressionsmodels** (HLM, GLMM, ...)
+
+-   Kriterium ist `GPA` und Prädiktor ist \`Zeit
+
+-   hier: Messzeitpunkte (Level 1) in SuS genested (Level 2)
+
+## Statistische Hyptohesen
+
+-   Wie hoch ist der **mittlere GPA zu T1**?
+
+    -   `Intercept`
+
+-   Gibt es eine **Veränderung** von GPA **über die Zeit** (steigen, sinken)?
+
+    -   `Slope` von `Time`
+
+-   Gibt es **Variablität im mittleren GPA** zu T1?
+
+    -   Variablität von des `Intercepts` (random effect)
+
+-   Gibt es **Variabilität in der Veränderung** von GPA über die Zeit?
+
+    -   Variablität des `Slopes` (random effect)
+
+-   **Kovariieren** diese beiden **Variabilitäten**?
+
+    -   Kovarianz (Korrelation) von `Intecept` und `Slope`
+
+## Plot
+
+```{r}
+#| echo: true
+
+plot(gpa ~ time, dat=data1, type = "b", xlab = "Time", ylab = "GPA")
+
+```
+
+::: notes
+-   man kann gut die Variabilität im `intercept` und im `slope` erkennen
+:::
+
+## Berechnung
+
+```{r}
+#| echo: true
+#| code-line-numbers: "|2"
+
+library(lme4)
+m1 <- lmer(gpa ~ time + (time|student), dat=data1)
+summary(m1)
+
+```
+
+## Fazit
+
+-   Es klappt eigentlich ganz gut mit HLM!
+
+-   Warum brauchen wir noch latente Wachstumsmodelle?
+
+-   **Antwort**: Flexibilität und Erweiterungen!
+
+::: notes
+-   Es können Kovariaten eingeführt werden.
+
+-   Slope und Intercept können als Prediktoren oder Kriterien eingeführt werden.
+
+-   Es können somit sehr komplexe Modelle betrachtet werden.
+:::
+
+# Wiederholung: SEM und `lavaan`
+
+# SEM Idee
+
+-   Strukturgleichungsmodelle sind **multivariate Statistikmodelle**, die verwendet werden, um die Beziehungen zwischen verschiedenen Variablen zu analysieren.
+
+-   Strukturgleichungsmodelle können sowohl **beobachtete** als auch **latenten Variablen** enthalten. Latente Variablen sind Variablen, die nicht direkt gemessen werden, sondern von beobachteten Variablen abgeleitet werden.
+
+-   Vorteil: ModelIierung komplexer Zusammenhänge und durch die Möglichkeit, **Messfehlereinflüsse zu berücksichtigen.**
+
+-   Geeignet sowohl für Quer- als auch **Längsschnittsdaten**
+
+-   Der Output von Strukturgleichungsmodellen umfasst Schätzungen der Modelparameter und Informationen über die **Qualität des Modells**, wie z.B. den Chi-Quadrat-Wert und den RMSEA (Root Mean Squared Error of Approximation).
+
+## SEM Pfadmodel
+
+![](figs/sem_pathmodel.png)
+
+(*Abbildung aus Geiser, 2011, p. 42*)
+
+::: notes
+-   Hierbei wird meist angenommen, dass die **latente Variable ursächlich für die Kovarianz** zwischen verschiedenen Indikatoren eines Konstrukts verantwortlich ist (sog. Teflektives Messmodell), d.h. Variation in der latenten Variable bedingt Variation in den Indikatoren und erklärt Zusammenhänge zwischen verschiedenen Indikatoren.
+
+-   Die Verknüpfung von **manifesten und latenten Variablen** geschieht über die Spezifika-
+
+    tion von **Regressionen**.
+
+-   Variablen, die im Modell durch eine oder mehrere andere Variablen vorhergesagt wer-
+
+    den, nennt man **endogene** Variablen.
+
+-   Variablen, die dabei ausschließlich als unabhängige Variablen fungieren, bezeichnet man als
+
+    **exogene** Variablen, da sie im Modell nicht durch andere Variablen erklärt werden.
+:::
+
+## `lavaan` - Installation und Laden
+
+1.  Installiere `lavaan` mit `install.packages("lavaan")`\`
+2.  lade `lavaan`
+
+```{r}
+#| echo: true
+
+library(lavaan)
+```
+
+## `lavaan` - Syntax {.smaller}
+
+| **formula type**                                 | operator  | **example**               |
+|:-------------------------------|--------------------|:-------------------|
+| latent variable definition (*reflective*)        | `=~`      | `latent =~ var1 + var2`   |
+| latent variable definition (*formative*)         | `<-`      | `latent <- 1*var1 + var2` |
+| regression                                       | `~`       | `var1 ~ var2`             |
+| (residual) (co)variance                          | `~~`      | `var1 ~~ var2`            |
+| free parameter or loading                        | `NA*`     | `NA*var`                  |
+| Get intercept (or mean)                          | `~ 1`     | `var ~ 1`                 |
+| Fix Intercet of observed variable                | `~ value` | `var ~ 0`                 |
+| Fixed parameter or loading to 1                  | `1*`      | `1*var`                   |
+| label parameter (e.g., for equality constraints) | `a*`      | `a*var1 + a*var2`         |
+|                                                  |           |                           |
+
+-   siehe auch [hier](https://lavaan.ugent.be/tutorial/syntax1.html) und [hier](https://stats.oarc.ucla.edu/r/seminars/lgm/#s0a)
+
+## Datenbeispiel
+
+1.  Laden alle Indikatoren auf einen gemeinsamen Faktor?
+2.  Wie hoch korreliert der Faktor mit Geschlecht?
+
+::: callout-note
+Daten für Regressionsanalysen mit `lme4` (siehe oben) müssen im `long format` vorliegen. Daten für SEM, CFA und LGCM müssen im `wide format` vorliegen.
+:::
+
+## Daten im wide-format
+
+```{r}
+data2 <- read.table("data/gpa/gpa_wide.csv", sep = ",", header = T)
+head(data2, 10)
+```
+
+## SEM Model in lavaan
+
+```{r}
+#| echo: true
+#| code-line-numbers: "|2|5|8"
+
+# model definition
+gpa_model <- 'gpa =~ gpa1 + gpa2 + gpa3 + gpa4'
+
+# fit model
+fit <- sem(gpa_model, data = data2)
+
+# get summary of model
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+```
+
+## Fit indices {.smaller}
+
+| Fit Index | Beschreibung                                                                          | Cut-off         |
+|------------------|-------------------------------------|------------------|
+| CFI       | Vergleicht den Fit des ZieImodelis mit dem Fit eines Baseline-Modells.                | \> .95 / \> .97 |
+| RMSEA     | Bewertet, wie weit ein hypothetisches Modell von einem perfekten Modell entfernt ist. | \< .05          |
+| SRMR      | Ein standardisiertes Maß zur Gesamtbewertung der Residuen.                            | \< .05          |
+
+-   **Cut-off Werte** nach Schermelleh et al. (2003)
+
+-   **Andere** Cut-off Werte bspw. in Hu & Bentler (1999)
+
+-   Aber nicht nur Cut-off anschauen, sondern auch **Faktorladungen** (siehe Greiff &
+
+    Heene, 2017; Heene et al., 2011)
+
+## Darstellung und Interpretation
+
+```{r}
+#| echo: true
+#| code-fold: true
+
+library(semPlot)
+
+semPaths(fit,
+         
+         # plot what?
+         what = "std",
+         
+         # size of latent and manifest variables
+         sizeLat = 7,
+         sizeMan = 5,
+         
+         # no fading
+         fade = FALSE,
+         
+         # size of arrows and paths
+         esize=2,
+         asize=2,
+         
+         # color
+         edge.color = "black",
+         )
+```
+
+# LGCM Einführung und Anwendung
+
+## Grundidee
+
+![](figs/lgcm_pathmodel.png)
+
+*(Abbildung aus Preacher, 2018)*
+
+::: notes
+-   `Slope` und `Intercept` werden als latente Faktoren modelliert
+:::
+
+## Metrik des Intecept Faktors
+
+![](figs/lgcm_intercept_definition.png)
+
+*(Abbildung aus Preacher, 2018)*
+
+## Umsetzung formal
+
+::: columns
+::: {.column width="50%"}
+1.  Alle manifesten Variablen (für Veränderungsmessung) laden mit `1` auf den latenten Faktor `Intercept`
+2.  Latenter `Slope` Faktor wird bestimmt mit definierter Änderung (z.B. linear oder quadratisch)
+3.  Intercept von manifestern Variablen wird auf `0` gesetzt.
+:::
+
+::: {.column width="50%"}
+![](figs/lgcm_pathmodel.png)
+
+*(Abbildung aus Preacher, 2018)*
+:::
+:::
+
+## Umsetzung in lavaan
+
+```{r}
+#| echo: true
+#| code-line-numbers: "|1-2|4|5"
+
+model <- 'i =~ 1*gpa1 + 1*gpa2 + 1*gpa3 + 1*gpa4
+          s =~ 0*gpa1 + 1*gpa2 + 2*gpa3 + 3*gpa4'
+
+fit <- growth(model, data=data2)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+```
+
+## Darstellung
+
+```{r}
+#| echo: true
+#| code-fold: true
+
+
+semPaths(fit,
+         
+         # plot what?
+         what = "est",
+         
+         # size of latent and manifest variables
+         sizeLat = 7,
+         sizeMan = 5,
+         
+         # no fading
+         fade = FALSE,
+         
+         # size of arrows and paths
+         esize=2,
+         asize=2,
+         
+         # color
+         edge.color = "black",
+         
+         # no thresholds
+         thresholds = T
+         )
+```
+
+## Darstellungstricks
+
+-   oft ein "Mix" aus unstandardisierten und standardisierten Estimates
+
+-   Beispiel aus Lotz et al. (2017)
+
+    ![](figs/Lotz2017.png)
+
+# LGCM Spezielles
+
+-   Modellvergleiche
+
+-   weitere Variablen im Model
+
+-   Stichprobengröße
+
+-   Fehlende Werte
+
+-   Was berichten?
+
+-   LGCM zweiter Ordnung
+
+# Modellvergleiche
+
+```{r}
+#| echo: true
+model <- 'i =~ 1*gpa1 + 1*gpa2 + 1*gpa3 + 1*gpa4'
+
+fit2 <- growth(model, data=data2)
+summary(fit2, fit.measures = TRUE, standardized = TRUE)
+```
+
+## Darstellung
+
+```{r}
+
+semPaths(fit2,
+         
+         # plot what?
+         what = "est",
+         
+         # size of latent and manifest variables
+         sizeLat = 7,
+         sizeMan = 5,
+         
+         # no fading
+         fade = FALSE,
+         
+         # size of arrows and paths
+         esize=2,
+         asize=2,
+         
+         # color
+         edge.color = "black",
+         
+         # no thresholds
+         thresholds = T
+         )
+```
+
+## Modelvergleich
+
+```{r}
+#| echo: true
+
+anova(fit, fit2)
+```
+
+-   hier aber *auch* nach aktueller Forschung schauen, die Modellvergleiche bspw. mittels Vergleich des CFI anschauen.
+
+# Weitere Variablen im Model
+
+## Idee
+
+![](figs/lgcm_predictors.png)
+
+*(Latente Wachstumskurven mit weiteren Variablen, Abbildung von [hier](Beispiel%20von%20hier))*
+
+## Berechnung
+
+```{r}
+#| echo: true
+
+# a linear growth model with a time-varying covariate
+model <- '# intercept and slope with fixed coefficients
+          i =~ 1*t1 + 1*t2 + 1*t3 + 1*t4
+          s =~ 0*t1 + 1*t2 + 2*t3 + 3*t4
+          
+          # regressions
+          i ~ x1 + x2
+          s ~ x1 + x2
+          
+          # time-varying covariates
+          t1 ~ c1
+          t2 ~ c2
+          t3 ~ c3
+          t4 ~ c4'
+
+fit <- growth(model, data = Demo.growth)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+```
+
+## Darstellung
+
+```{r}
+semPaths(fit,
+         
+         # plot what?
+         what = "est",
+         
+         # size of latent and manifest variables
+         sizeLat = 7,
+         sizeMan = 5,
+         
+         # no fading
+         fade = FALSE,
+         
+         # size of arrows and paths
+         esize=2,
+         asize=2,
+         
+         # color
+         edge.color = "black",
+         
+         # no thresholds
+         thresholds = T)
+```
+
+## Stichprobengröße
+
+-   hängt vom Estimator ab
+
+-   verschiedene Daumenregeln und Simulationen
+
+    -   z.B. `N:q` = 20:1 (Kline, 2016)
+
+-   *N* \> 200 wird häufig empfohlen (zum Beispiel Kyriazos et al., 2018)
+
+## Poweranalyse (a priori)
+
+-   wie groß muss das N sein, um ein falsches Model abzulehnen (mittels RMSEA)
+
+```{r}
+#| echo: true
+
+library(semPower)
+
+ap <- semPower(type = 'a-priori',
+               effect = .05,
+               effect.measure = 'RMSEA',
+               alpha = .05,
+               power = .80,
+               df = 5)
+
+summary(ap)
+```
+
+$$
+df = p · (p + 1)/2 − q
+$$
+
+where $p$ is the number of observed variables and $q$ is the number of free parameters of the hypothesized model. To obtain the latter in a typical SEM, one needs to count (a) loadings, (b) item-residual variances, and (c) covariance/regression parameters between factors and between item residuals.
+
+## Fehlende Werte
+
+-   prinzipiell eher unproblematisch
+
+-   wenn nicht näher spezifisiert, dann führt *lavaan* listwise deletion durch
+
+-   man kann auch `missing = "ML"` angeben, dann wird wird full information maximum likelihood (FIML) durchgeführt
+
+-   es gibt keine pauschale Aussage: ihr müsst eure Daten kennen und inhaltlich überlegen, was Sinn ergibt
+
+## Was berichten?
+
+Es hängt natürlich von der **Fragestellung** ab, aber:
+
+1.  Model fit ( $\chi²$ , CFI, RMSEA, SRMR)
+2.  ggf. konkurrierende Modelle
+3.  Unstandardisierte Estimates (Mittelwerte und Varianz) von lantenten Intercept und Slope Faktoren
+4.  Kovarianz (besser Korrelation) zwischen Intercept und Slope
+5.  Kovarianz (besser Korrelation) mit anderen exogenen oder endogenen (latenten) Variablen
+6.  Graphishe Aufbereitung im "mixed" Format (aber auch hier: Fragestellung!)
+
+# LGCM zweiter Ordnung
+
+-   mit den LGCM erster Ordnung (s.o.) nutzen wir noch nicht das volle Potential von SEM aus
+
+    -   Kontrolle des Messfehlers!
+
+-   Daher: wenn man mehrere Indikatoren für ein Konstrukt pro Zeit hat, besser den Messfehler kontrollieren.
+
+    -   Messmodelle rechnen für jede Zeiteinheit
+
+    -   Messinvarianz kontrollieren (mindestens starke Messinvarianz)
+
+    -   LGCM zweiter Ordnung rechnen
+
+## Beispiel
+
+![](figs/lgcm_second_order_2.jpeg)
+
+*(Abbildung aus Hox et al., 2003)*
+
+## Beispiel mit Methodenfaktor
+
+![](figs/lgcm_second_order.png)
+
+*(Abbildung und Beispiel aus Geiser, 2011)*
+
+::: notes
+-   Messinvarianz prüfen
+
+-   Intercepts der Referenzindikatoren (a11, a12, a13, a14) 0
+
+-   Intercepts der restlichen Indikatoren gleichsetzen über die Zeit
+
+-   Ladungen über die Zeit gleichsetzen (a11, a21, a12, ...)
+
+-   Methodenfaktor bzw. Korrelation der Residuen zulassen?
+:::

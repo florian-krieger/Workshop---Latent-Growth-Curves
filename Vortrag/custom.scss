@@ -1,0 +1,23 @@
+/*-- scss:defaults --*/
+
+$tu-col: #639a00;
+$my-gray: #444444;
+
+$body-color: $my-gray;
+$link-color: $tu-col;
+
+$presentation-heading-color: $tu-col;
+$selection-color: white;
+$selection-bg: $tu-col;
+$light-bg-code-color: $tu-col;
+
+
+$presentation-h1-font-size: 2.2em;
+$presentation-h2-font-size: 1.5em;
+$presentation-h3-font-size: 1.2em;
+
+$presentation-font-size-root: 30px;
+
+div.callout-note.callout {
+  border-left-color: $tu-col;
+}

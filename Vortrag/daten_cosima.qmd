@@ -1,0 +1,157 @@
+---
+title: "Daten COSIMA"
+format: revealjs
+editor: visual
+---
+
+# Datenbeispiel COSIMA
+
+![](figs/laura_model.png)
+
+Abbildung und Daten von Laura
+
+## Daten einlesen
+
+```{r}
+#| echo: true
+
+# read data
+data4 <- read.table("data/laura/data2_LGM.csv", sep = ",", header = TRUE)
+
+head(data4)
+
+#colnames(data4)
+```
+
+## Dateninspektion
+
+```{r}
+#| echo: true
+#| code-fold: true
+
+library(tidyr)
+library(dplyr)
+library(stringr)
+
+data4$Student <- seq(1:nrow(data4))
+
+data4_wide <- data4 %>% 
+                select(c(Student, Kurs,
+                         Out_effi_1, Out_effi_2, Out_effi_3, Out_effi_4, Out_effi_5)) %>% 
+                gather("time", "Out_effi", -c(Student, Kurs)) %>% 
+                mutate(time = str_replace(time, "Out_effi_", "")) %>% 
+                drop_na()
+
+```
+
+```{r}
+library(ggplot2)
+library(cowplot)
+
+ggplot(data4_wide, aes(time, Out_effi)) +
+   geom_point() +
+   geom_line(aes(group = Student)) +
+   facet_grid(Kurs ~.) +
+   theme_cowplot()
+```
+
+```{r}
+library(jmv)
+
+corrMatrix(
+    data = data4,
+    vars = vars(Out_effi_1, Out_effi_2, Out_effi_3, Out_effi_4, Out_effi_5,
+                Out_just_1, Out_just_2, Out_just_3, Out_just_4, Out_just_5))
+```
+
+## CFA für Out
+
+```{r}
+#| echo: true
+
+library(lavaan)
+
+model <- 'Out_efi =~ Out_effi_1 + Out_effi_2 + Out_effi_3 + Out_effi_4 + Out_effi_5
+          
+          # intercepts
+          Out_effi_1 ~ 1
+          Out_effi_2 ~ 1
+          Out_effi_3 ~ 1
+          Out_effi_4 ~ 1
+          Out_effi_5 ~ 1
+
+'
+
+fit <- cfa(model, data=data4, estimator = "MLR")
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+```
+
+```{r}
+library(semPlot)
+
+semPaths(fit,
+         
+         # plot what?
+         what = "std",
+         
+         # size of latent and manifest variables
+         sizeLat = 7,
+         sizeMan = 5,
+         
+         # no fading
+         fade = FALSE,
+         
+         # size of arrows and paths
+         esize=2,
+         asize=2,
+         
+         # color
+         edge.color = "black",
+         
+         # no thresholds
+         thresholds = T
+         )
+```
+
+```{r}
+model <- 'i =~ 1*Out_effi_1 + 1*Out_effi_2 + 1*Out_effi_3 + 1*Out_effi_4 + 1*Out_effi_5
+
+          # intercepts
+          Out_effi_1 ~ 0
+          Out_effi_2 ~ 0
+          Out_effi_3 ~ 0
+          Out_effi_4 ~ 0
+          Out_effi_5 ~ 0
+          
+          # latent intecept
+          i ~ 1
+'
+
+fit <- cfa(model, data=data4, estimator = "ML", meanstructure=TRUE, check.gradient = FALSE)
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+```
+
+## Berechnung Intercept und Slope
+
+```{r}
+#| echo: true
+
+model <- 'i =~ 1*Out_effi_1 + 1*Out_effi_2 + 1*Out_effi_3 + 1*Out_effi_4 + 1*Out_effi_5'
+
+
+fit <- growth(model, data=data4, estimator = "ML")
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+```
+
+# Messmodelle
+
+## Social Skills
+
+```{r CFA_social_skills }
+#| echo: true
+
+model <- 'SoSk =~ ss_dgk + ss_pgk + ss_igk + ss_vgk + ss_kgk'
+
+fit <- cfa(model, data=data4, estimator = "ML")
+summary(fit, fit.measures = TRUE, standardized = TRUE)
+```
