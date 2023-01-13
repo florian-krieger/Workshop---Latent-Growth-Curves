@@ -224,15 +224,15 @@ library(lavaan)
 ## `lavaan` - Syntax {.smaller}
 
 | **formula type**                                 | operator  | **example**               |
-|:-------------------------------|--------------------|:-------------------|
+|:-------------------------------------------------|-----------|:--------------------------|
 | latent variable definition (*reflective*)        | `=~`      | `latent =~ var1 + var2`   |
 | latent variable definition (*formative*)         | `<-`      | `latent <- 1*var1 + var2` |
 | regression                                       | `~`       | `var1 ~ var2`             |
 | (residual) (co)variance                          | `~~`      | `var1 ~~ var2`            |
 | free parameter or loading                        | `NA*`     | `NA*var`                  |
-| Get intercept (or mean)                          | `~ 1`     | `var ~ 1`                 |
-| Fix Intercet of observed variable                | `~ value` | `var ~ 0`                 |
-| Fixed parameter or loading to 1                  | `1*`      | `1*var`                   |
+| get intercept (or mean)                          | `~ 1`     | `var ~ 1`                 |
+| fix Intercet of observed variable                | `~ value` | `var ~ 0`                 |
+| fixed parameter or loading to 1                  | `1*`      | `1*var`                   |
 | label parameter (e.g., for equality constraints) | `a*`      | `a*var1 + a*var2`         |
 |                                                  |           |                           |
 
@@ -273,7 +273,7 @@ summary(fit, fit.measures = TRUE, standardized = TRUE)
 ## Fit indices {.smaller}
 
 | Fit Index | Beschreibung                                                                          | Cut-off         |
-|------------------|-------------------------------------|------------------|
+|-----------|---------------------------------------------------------------------------------------|-----------------|
 | CFI       | Vergleicht den Fit des ZieImodelis mit dem Fit eines Baseline-Modells.                | \> .95 / \> .97 |
 | RMSEA     | Bewertet, wie weit ein hypothetisches Modell von einem perfekten Modell entfernt ist. | \< .05          |
 | SRMR      | Ein standardisiertes Maß zur Gesamtbewertung der Residuen.                            | \< .05          |
